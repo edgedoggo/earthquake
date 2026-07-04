@@ -7,7 +7,7 @@ const SETTINGS = {
   soundPath: "soundPath",
   soundVolume: "soundVolume",
   shakeGM: "shakeGM",
-  promptDexterity: "promptDexterity",
+  promptAudience: "promptAudience",
   dexterityDC: "dexterityDC",
   applyProne: "applyProne"
 };
@@ -84,13 +84,18 @@ function registerSettings() {
     default: true
   });
 
-  game.settings.register(MODULE_ID, SETTINGS.promptDexterity, {
-    name: "Prompt Dexterity Checks",
-    hint: "Create a chat prompt for tokens on the canvas after each earthquake.",
+  game.settings.register(MODULE_ID, SETTINGS.promptAudience, {
+    name: "Dexterity Check Prompt Audience",
+    hint: "Choose which tokens on the active scene receive a Dexterity check prompt after each earthquake.",
     scope: "world",
     config: true,
-    type: Boolean,
-    default: true
+    type: String,
+    default: "none",
+    choices: {
+      none: "No one",
+      everyone: "Everyone on active scene",
+      players: "Players only on active scene"
+    }
   });
 
   game.settings.register(MODULE_ID, SETTINGS.dexterityDC, {
@@ -119,7 +124,7 @@ async function triggerEarthquake(options = {}) {
   if (game.user.isGM) {
     game.socket.emit(SOCKET, { action: "executeEarthquake", data });
     await executeEarthquake(data);
-    if (data.promptDexterity) await promptDexterityChecks(data);
+    if (shouldPromptDexterity(data)) await promptDexterityChecks(data);
     return;
   }
 
@@ -132,7 +137,7 @@ async function handleSocketMessage(message = {}) {
   if (action === "requestEarthquake" && game.user.isGM) {
     game.socket.emit(SOCKET, { action: "executeEarthquake", data });
     await executeEarthquake(data);
-    if (data.promptDexterity) await promptDexterityChecks(data);
+    if (shouldPromptDexterity(data)) await promptDexterityChecks(data);
     return;
   }
 
@@ -153,10 +158,20 @@ function buildEarthquakeData(options = {}) {
     soundPath: options.soundPath ?? game.settings.get(MODULE_ID, SETTINGS.soundPath),
     soundVolume: options.soundVolume ?? null,
     shakeGM: options.shakeGM ?? null,
-    promptDexterity: options.promptDexterity ?? game.settings.get(MODULE_ID, SETTINGS.promptDexterity),
+    promptAudience: options.promptAudience ?? getPromptAudience(options),
     dexterityDC: Number(options.dexterityDC ?? game.settings.get(MODULE_ID, SETTINGS.dexterityDC)),
     applyProne: options.applyProne ?? game.settings.get(MODULE_ID, SETTINGS.applyProne)
   };
+}
+
+function getPromptAudience(options = {}) {
+  if (options.promptDexterity === false) return "none";
+  if (options.promptDexterity === true) return "everyone";
+  return game.settings.get(MODULE_ID, SETTINGS.promptAudience);
+}
+
+function shouldPromptDexterity(data = {}) {
+  return data.promptAudience && data.promptAudience !== "none";
 }
 
 async function executeEarthquake(data = {}) {
@@ -185,30 +200,35 @@ async function playEarthquakeSound(src, volume = 0.8) {
 }
 
 function shakeCanvas(intensity = 80, duration = 5000) {
-  const board = document.getElementById("board") ?? document.getElementById("canvas");
-  if (!board?.animate) return;
+  const originalPosition = canvas?.stage?.pivot?.clone?.();
+  if (!originalPosition || typeof canvas.animatePan !== "function") return;
 
-  const movement = Math.max(1, Number(intensity) / 20);
-  board.animate([
-    { transform: "translate(0, 0) rotate(0deg)" },
-    { transform: `translate(${movement}px, ${movement}px) rotate(0.35deg)` },
-    { transform: `translate(-${movement * 1.2}px, -${movement}px) rotate(-0.45deg)` },
-    { transform: `translate(${movement * 1.4}px, -${movement * 0.8}px) rotate(0.4deg)` },
-    { transform: `translate(-${movement}px, ${movement * 1.1}px) rotate(-0.35deg)` },
-    { transform: "translate(0, 0) rotate(0deg)" }
-  ], {
-    duration: Math.max(250, Number(duration)),
-    easing: "ease-in-out",
-    iterations: 1
-  });
+  const wiggleAmount = Math.max(1, Number(intensity));
+  const wiggleDuration = Math.max(250, Number(duration));
+  const startTime = Date.now();
+
+  function animateWiggle() {
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime >= wiggleDuration) {
+      canvas.animatePan({ x: originalPosition.x, y: originalPosition.y });
+      return;
+    }
+
+    const xOffset = (Math.random() * wiggleAmount - wiggleAmount / 2) | 0;
+    const yOffset = (Math.random() * wiggleAmount - wiggleAmount / 2) | 0;
+    canvas.animatePan({ x: originalPosition.x + xOffset, y: originalPosition.y + yOffset });
+    requestAnimationFrame(animateWiggle);
+  }
+
+  animateWiggle();
 }
 
 async function promptDexterityChecks(data = buildEarthquakeData()) {
   if (!game.user.isGM) return;
 
-  const tokens = canvas.tokens?.placeables?.filter(token => token.actor) ?? [];
+  const tokens = getDexterityPromptTokens(data.promptAudience);
   if (!tokens.length) {
-    ui.notifications?.warn("Earthquake: no actor tokens are on the canvas.");
+    ui.notifications?.warn("Earthquake: no matching actor tokens are on the canvas.");
     return;
   }
 
@@ -245,6 +265,15 @@ async function promptDexterityChecks(data = buildEarthquakeData()) {
 
   const content = message.content.replaceAll('data-message-id=""', `data-message-id="${message.id}"`);
   await message.update({ content });
+}
+
+function getDexterityPromptTokens(audience = "none") {
+  if (audience === "none") return [];
+
+  const tokens = canvas.tokens?.placeables?.filter(token => token.actor) ?? [];
+  if (audience === "everyone") return tokens;
+
+  return tokens.filter(token => game.users.some(user => !user.isGM && token.actor.testUserPermission(user, "OWNER")));
 }
 
 async function rollDexterityForToken(tokenId, messageId) {

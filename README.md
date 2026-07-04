@@ -13,7 +13,7 @@ Earthquake lets a GM trigger a configurable earthquake effect across every conne
 
 The module includes bundled sounds, a draggable compendium macro, and an optional chat prompt for Dexterity checks. Tokens that fail the configured DC can be knocked Prone automatically.
 
-Earthquake 3.1.0 is verified for Foundry VTT 14 while retaining runtime fallbacks for Foundry VTT 10-13. If your table needs the exact pre-v14 package, use the `v3.0.0` release instead of `latest`.
+Earthquake 3.1.1 is verified for Foundry VTT 14 while retaining runtime fallbacks for Foundry VTT 10-13. If your table needs the exact pre-v14 package, use the `v3.0.0` release instead of `latest`.
 
 ------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ https://github.com/openkyle/earthquake/releases/download/latest/module.json
 - **Earthquake Sound**: The audio file played for every connected client.
 - **Earthquake Sound Volume**: Per-client playback volume.
 - **Shake GM Canvas**: Allows the GM to opt out of the visual shake.
-- **Prompt Dexterity Checks**: Posts a chat prompt for every actor token on the active canvas.
+- **Dexterity Check Prompt Audience**: Choose no prompt, every actor token on the active scene, or player-owned tokens on the active scene only.
 - **Dexterity Check DC**: The DC used by the chat prompt.
 - **Knock Prone On Failed Check**: Applies the Prone status when a token fails.
 
@@ -54,7 +54,7 @@ await game.earthquake.trigger({
   intensity: 120,
   duration: 8000,
   soundPath: "modules/earthquake/assets/sounds/collapse.ogg",
-  promptDexterity: true,
+  promptAudience: "everyone",
   dexterityDC: 16,
   applyProne: true
 });

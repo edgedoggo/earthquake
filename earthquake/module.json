@@ -27,7 +27,8 @@
             }
         }
     ],
-    "version": "3.1.0",
+    "version": "3.1.1",
+    "socket": true,
     "compatibility": {
         "minimum": 10,
         "verified": "14"
