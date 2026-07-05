@@ -13,7 +13,7 @@ Earthquake lets a GM trigger a configurable earthquake effect across every conne
 
 The module includes bundled sounds, a draggable compendium macro, and an optional chat prompt for Dexterity checks. Tokens that fail the configured DC can be knocked Prone automatically.
 
-Earthquake 3.1.1 is verified for Foundry VTT 14 while retaining runtime fallbacks for Foundry VTT 10-13. If your table needs the exact pre-v14 package, use the `v3.0.0` release instead of `latest`.
+Earthquake 3.1.2 is verified for Foundry VTT 14 while retaining runtime fallbacks for Foundry VTT 10-13. If your table needs the exact pre-v14 package, use the `v3.0.0` release instead of `latest`.
 
 ------------------------------------------------------------------
 

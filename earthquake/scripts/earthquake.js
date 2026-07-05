@@ -232,19 +232,10 @@ async function promptDexterityChecks(data = buildEarthquakeData()) {
     return;
   }
 
-  const tokenRows = tokens.map(token => {
-    const ownerNames = game.users
-      .filter(user => !user.isGM && token.actor.testUserPermission(user, "OWNER"))
-      .map(user => escapeHTML(user.name))
-      .join(", ");
-    const ownerText = ownerNames ? `<span class="earthquake-owners">${ownerNames}</span>` : "";
-
-    return `<li>
-      <button type="button" data-earthquake-roll data-token-id="${token.id}" data-message-id="">
+  const tokenButtons = tokens.map(token => {
+    return `<button type="button" data-earthquake-roll data-token-id="${token.id}" data-message-id="">
         ${escapeHTML(token.name)}
-      </button>
-      ${ownerText}
-    </li>`;
+      </button>`;
   }).join("");
 
   const message = await ChatMessage.create({
@@ -252,7 +243,7 @@ async function promptDexterityChecks(data = buildEarthquakeData()) {
     content: `<section class="earthquake-card">
       <h2>Earthquake</h2>
       <p>Dexterity check DC ${data.dexterityDC}. Failed checks ${data.applyProne ? "knock the token prone." : "do not apply prone automatically."}</p>
-      <ol>${tokenRows}</ol>
+      <div class="earthquake-roll-buttons">${tokenButtons}</div>
     </section>`,
     flags: {
       [MODULE_ID]: {
