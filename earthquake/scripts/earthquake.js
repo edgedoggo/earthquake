@@ -147,13 +147,34 @@ async function confirmEarthquakeTrigger(options = {}) {
   if (options.skipPrompt || !game.user.isGM) return true;
   if (!game.settings.get(MODULE_ID, SETTINGS.promptBeforeShaking)) return true;
 
+  const action = await promptEarthquakeAction();
+  if (action === "settings") {
+    openSettings();
+    return false;
+  }
+
+  return action === "shake";
+}
+
+async function promptEarthquakeAction() {
+  const dialogV2 = globalThis.foundry?.applications?.api?.DialogV2;
+  if (dialogV2?.wait) {
+    const action = await dialogV2.wait({
+      window: { title: "Earthquake" },
+      content: "<p>Shake the active scene now, or adjust Earthquake settings first?</p>",
+      buttons: [
+        { action: "shake", label: "Shake", default: true },
+        { action: "settings", label: "Adjust Settings" }
+      ],
+      rejectClose: false
+    });
+
+    return action?.action ?? action ?? "cancel";
+  }
+
   return new Promise(resolve => {
     const DialogClass = globalThis.Dialog;
-    if (!DialogClass) {
-      openSettings();
-      resolve(false);
-      return;
-    }
+    if (!DialogClass) return renderFallbackPrompt(resolve);
 
     const dialog = new DialogClass({
       title: "Earthquake",
@@ -161,22 +182,54 @@ async function confirmEarthquakeTrigger(options = {}) {
       buttons: {
         shake: {
           label: "Shake",
-          callback: () => resolve(true)
+          callback: () => resolve("shake")
         },
         settings: {
           label: "Adjust Settings",
-          callback: () => {
-            openSettings();
-            resolve(false);
-          }
+          callback: () => resolve("settings")
         }
       },
       default: "shake",
-      close: () => resolve(false)
+      close: () => resolve("cancel")
     });
 
     dialog.render(true);
   });
+}
+
+function renderFallbackPrompt(resolve) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = [
+    "position:fixed",
+    "inset:0",
+    "z-index:100000",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center",
+    "background:rgba(0,0,0,0.45)"
+  ].join(";");
+
+  overlay.innerHTML = `<div style="max-width:360px;padding:16px;background:#191813;color:#f0f0e0;border:1px solid #777;box-shadow:0 0 20px #000;">
+    <h2 style="margin-top:0;">Earthquake</h2>
+    <p>Shake the active scene now, or adjust Earthquake settings first?</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" data-earthquake-dialog="settings">Adjust Settings</button>
+      <button type="button" data-earthquake-dialog="shake">Shake</button>
+    </div>
+  </div>`;
+
+  const finish = action => {
+    overlay.remove();
+    resolve(action);
+  };
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) finish("cancel");
+    const button = event.target?.closest?.("[data-earthquake-dialog]");
+    if (button) finish(button.dataset.earthquakeDialog);
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function openSettings() {
