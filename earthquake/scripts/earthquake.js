@@ -7,6 +7,7 @@ const SETTINGS = {
   soundPath: "soundPath",
   soundVolume: "soundVolume",
   shakeGM: "shakeGM",
+  promptBeforeShaking: "promptBeforeShaking",
   promptAudience: "promptAudience",
   dexterityDC: "dexterityDC",
   applyProne: "applyProne"
@@ -84,6 +85,15 @@ function registerSettings() {
     default: true
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.promptBeforeShaking, {
+    name: "Prompt Before Shaking",
+    hint: "When enabled, GMs are asked to shake now or open settings before the earthquake begins.",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+
   game.settings.register(MODULE_ID, SETTINGS.promptAudience, {
     name: "Dexterity Check Prompt Audience",
     hint: "Choose which tokens on the active scene receive a Dexterity check prompt after each earthquake.",
@@ -119,6 +129,8 @@ function registerSettings() {
 }
 
 async function triggerEarthquake(options = {}) {
+  if (!(await confirmEarthquakeTrigger(options))) return;
+
   const data = buildEarthquakeData(options);
 
   if (game.user.isGM) {
@@ -129,6 +141,53 @@ async function triggerEarthquake(options = {}) {
   }
 
   game.socket.emit(SOCKET, { action: "requestEarthquake", data });
+}
+
+async function confirmEarthquakeTrigger(options = {}) {
+  if (options.skipPrompt || !game.user.isGM) return true;
+  if (!game.settings.get(MODULE_ID, SETTINGS.promptBeforeShaking)) return true;
+
+  return new Promise(resolve => {
+    const DialogClass = globalThis.Dialog;
+    if (!DialogClass) {
+      openSettings();
+      resolve(false);
+      return;
+    }
+
+    const dialog = new DialogClass({
+      title: "Earthquake",
+      content: "<p>Shake the active scene now, or adjust Earthquake settings first?</p>",
+      buttons: {
+        shake: {
+          label: "Shake",
+          callback: () => resolve(true)
+        },
+        settings: {
+          label: "Adjust Settings",
+          callback: () => {
+            openSettings();
+            resolve(false);
+          }
+        }
+      },
+      default: "shake",
+      close: () => resolve(false)
+    });
+
+    dialog.render(true);
+  });
+}
+
+function openSettings() {
+  if (game.settings.sheet?.render) {
+    game.settings.sheet.render(true);
+    return;
+  }
+
+  if (globalThis.SettingsConfig) {
+    new SettingsConfig().render(true);
+  }
 }
 
 async function handleSocketMessage(message = {}) {
