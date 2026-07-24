@@ -174,49 +174,49 @@ function renderQuickMenu(resolve) {
     "background:rgba(0,0,0,0.45)"
   ].join(";");
 
-  overlay.innerHTML = `<div style="width:min(460px, calc(100vw - 32px));padding:16px;background:#ffe1c7;color:#2f1b12;border:1px solid #bf7954;border-radius:6px;box-shadow:0 12px 32px rgba(47,27,18,0.35);font-family:var(--font-primary, serif);">
+  overlay.innerHTML = `<div style="width:min(460px, calc(100vw - 32px));padding:16px;background:#f0e6d2;color:#191813;border:1px solid #7a7971;border-radius:5px;box-shadow:0 12px 32px rgba(0,0,0,0.35);font-family:var(--font-primary, serif);">
     <form data-earthquake-quick-menu>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:1px solid #d7956f;padding-bottom:6px;">
-        <h2 style="margin:0;color:#4a2417;">Earthquake</h2>
-        <button type="button" title="Open Settings" data-earthquake-dialog="settings" style="width:32px;height:32px;padding:0;border:1px solid #a86442;background:#fff3e8;color:#4a2417;border-radius:4px;">&#9881;</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:1px solid #b5a58a;padding-bottom:6px;">
+        <h2 style="margin:0;color:#191813;">Earthquake</h2>
+        <button type="button" title="Open Settings" data-earthquake-dialog="settings" style="width:32px;height:32px;padding:0;border:1px solid #7a7971;background:#e9dcc7;color:#191813;border-radius:4px;">&#9881;</button>
       </div>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Intensity
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Intensity
         <input name="intensity" type="range" min="10" max="250" step="5" value="${Number(game.settings.get(MODULE_ID, SETTINGS.intensity))}" style="width:100%;">
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Duration
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Duration
         <input name="duration" type="range" min="500" max="30000" step="500" value="${Number(game.settings.get(MODULE_ID, SETTINGS.duration))}" style="width:100%;">
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Sound Path
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Sound Path
         <span style="display:flex;gap:6px;margin-top:3px;">
-          <input name="soundPath" type="text" value="${escapeAttribute(game.settings.get(MODULE_ID, SETTINGS.soundPath))}" style="flex:1;min-width:0;background:#fff7ef;color:#2f1b12;border:1px solid #bf7954;border-radius:4px;">
-          <button type="button" data-earthquake-browse-sound style="white-space:nowrap;border:1px solid #a86442;background:#fff3e8;color:#4a2417;border-radius:4px;">Browse</button>
+          <input name="soundPath" type="text" value="${escapeAttribute(game.settings.get(MODULE_ID, SETTINGS.soundPath))}" style="flex:1;min-width:0;background:#f8f4ec;color:#191813;border:1px solid #7a7971;border-radius:4px;">
+          <button type="button" data-earthquake-browse-sound style="white-space:nowrap;border:1px solid #7a7971;background:#e9dcc7;color:#191813;border-radius:4px;">Browse</button>
         </span>
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Sound Volume
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Sound Volume
         <input name="soundVolume" type="range" min="0" max="1" step="0.05" value="${Number(game.settings.get(MODULE_ID, SETTINGS.soundVolume))}" style="width:100%;">
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Dexterity Prompt
-        <select name="promptAudience" style="width:100%;background:#fff7ef;color:#2f1b12;border:1px solid #bf7954;border-radius:4px;">
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Dexterity Prompt
+        <select name="promptAudience" style="width:100%;background:#f8f4ec;color:#191813;border:1px solid #7a7971;border-radius:4px;">
           ${renderAudienceOption("none", "No one")}
           ${renderAudienceOption("everyone", "Everyone on active scene")}
           ${renderAudienceOption("players", "Players only on active scene")}
         </select>
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">Dexterity DC
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Dexterity DC
         <input name="dexterityDC" type="range" min="1" max="40" step="1" value="${Number(game.settings.get(MODULE_ID, SETTINGS.dexterityDC))}" style="width:100%;">
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">
         <input name="shakeGM" type="checkbox" ${game.settings.get(MODULE_ID, SETTINGS.shakeGM) ? "checked" : ""}> Shake GM Canvas
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">
         <input name="applyProne" type="checkbox" ${game.settings.get(MODULE_ID, SETTINGS.applyProne) ? "checked" : ""}> Knock Prone On Failed Check
       </label>
-      <label style="display:block;margin:8px 0;color:#4a2417;font-weight:700;">
+      <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">
         <input name="hideQuickMenu" type="checkbox"> Hide this quick menu
       </label>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-        <button type="button" data-earthquake-dialog="cancel" style="border:1px solid #a86442;background:#fff3e8;color:#4a2417;border-radius:4px;">Cancel</button>
-        <button type="submit" style="border:1px solid #7a3f28;background:#c76538;color:#fff7ef;border-radius:4px;">Shake</button>
+        <button type="button" data-earthquake-dialog="cancel" style="border:1px solid #7a7971;background:#e9dcc7;color:#191813;border-radius:4px;">Cancel</button>
+        <button type="submit" style="border:1px solid #5e0000;background:#8a1f1f;color:#f8f4ec;border-radius:4px;">Shake</button>
       </div>
     </form>
   </div>`;
