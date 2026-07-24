@@ -174,7 +174,7 @@ function renderQuickMenu(resolve) {
     "background:rgba(0,0,0,0.45)"
   ].join(";");
 
-  overlay.innerHTML = `<div style="width:min(460px, calc(100vw - 32px));padding:16px;background:#f0e6d2;color:#191813;border:1px solid #7a7971;border-radius:5px;box-shadow:0 12px 32px rgba(0,0,0,0.35);font-family:var(--font-primary, serif);">
+  overlay.innerHTML = `<div style="width:min(460px, calc(100vw - 32px));padding:16px;background:url('/ui/parchment.jpg') repeat;color:#191813;border:1px solid #7a7971;border-radius:5px;box-shadow:0 12px 32px rgba(0,0,0,0.35);font-family:var(--font-primary, serif);">
     <form data-earthquake-quick-menu>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:1px solid #b5a58a;padding-bottom:6px;">
         <h2 style="margin:0;color:#191813;">Earthquake</h2>
@@ -188,8 +188,8 @@ function renderQuickMenu(resolve) {
       </label>
       <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Sound Path
         <span style="display:flex;gap:6px;margin-top:3px;">
-          <input name="soundPath" type="text" value="${escapeAttribute(game.settings.get(MODULE_ID, SETTINGS.soundPath))}" style="flex:1;min-width:0;background:#f8f4ec;color:#191813;border:1px solid #7a7971;border-radius:4px;">
-          <button type="button" data-earthquake-browse-sound style="white-space:nowrap;border:1px solid #7a7971;background:#e9dcc7;color:#191813;border-radius:4px;">Browse</button>
+          <input name="soundPath" type="text" value="${escapeAttribute(game.settings.get(MODULE_ID, SETTINGS.soundPath))}" style="flex:1 1 auto;min-width:0;height:32px;padding:3px 6px;background:rgba(255,255,255,0.72);color:#191813;border:1px solid #7a7971;border-radius:4px;">
+          <button type="button" data-earthquake-browse-sound style="flex:0 0 9ch;width:9ch;min-width:9ch;max-width:9ch;white-space:nowrap;padding:3px;border:1px solid #7a7971;background:#e9dcc7;color:#191813;border-radius:4px;">Browse</button>
         </span>
       </label>
       <label style="display:block;margin:8px 0;color:#191813;font-weight:700;">Sound Volume

@@ -27,12 +27,12 @@
             }
         }
     ],
-    "version": "3.1.9",
+    "version": "3.1.10",
     "socket": true,
     "compatibility": {
         "minimum": 10,
         "verified": "14"
     },
     "manifest": "https://raw.githubusercontent.com/openkyle/earthquake/main/earthquake/module.json",
-    "download": "https://github.com/openkyle/earthquake/releases/download/v3.1.9/earthquake.zip"
+    "download": "https://github.com/openkyle/earthquake/releases/download/v3.1.10/earthquake.zip"
 }
