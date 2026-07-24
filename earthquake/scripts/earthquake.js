@@ -7,7 +7,7 @@ const SETTINGS = {
   soundPath: "soundPath",
   soundVolume: "soundVolume",
   shakeGM: "shakeGM",
-  promptBeforeShaking: "promptBeforeShaking",
+  showQuickMenu: "showQuickMenu",
   promptAudience: "promptAudience",
   dexterityDC: "dexterityDC",
   applyProne: "applyProne"
@@ -85,9 +85,9 @@ function registerSettings() {
     default: true
   });
 
-  game.settings.register(MODULE_ID, SETTINGS.promptBeforeShaking, {
-    name: "Prompt Before Shaking",
-    hint: "When enabled, GMs are asked to shake now or open settings before the earthquake begins.",
+  game.settings.register(MODULE_ID, SETTINGS.showQuickMenu, {
+    name: "Show quick menu on macro launch",
+    hint: "When enabled, GMs can adjust earthquake settings before shaking the active scene.",
     scope: "client",
     config: true,
     type: Boolean,
@@ -145,7 +145,7 @@ async function triggerEarthquake(options = {}) {
 
 async function confirmEarthquakeTrigger(options = {}) {
   if (options.skipPrompt || !game.user.isGM) return true;
-  if (!game.settings.get(MODULE_ID, SETTINGS.promptBeforeShaking)) return true;
+  if (!game.settings.get(MODULE_ID, SETTINGS.showQuickMenu)) return true;
 
   const action = await promptEarthquakeAction();
   if (action === "settings") {
@@ -157,47 +157,12 @@ async function confirmEarthquakeTrigger(options = {}) {
 }
 
 async function promptEarthquakeAction() {
-  const dialogV2 = globalThis.foundry?.applications?.api?.DialogV2;
-  if (dialogV2?.wait) {
-    const action = await dialogV2.wait({
-      window: { title: "Earthquake" },
-      content: "<p>Shake the active scene now, or adjust Earthquake settings first?</p>",
-      buttons: [
-        { action: "shake", label: "Shake", default: true },
-        { action: "settings", label: "Adjust Settings" }
-      ],
-      rejectClose: false
-    });
-
-    return action?.action ?? action ?? "cancel";
-  }
-
   return new Promise(resolve => {
-    const DialogClass = globalThis.Dialog;
-    if (!DialogClass) return renderFallbackPrompt(resolve);
-
-    const dialog = new DialogClass({
-      title: "Earthquake",
-      content: "<p>Shake the active scene now, or adjust Earthquake settings first?</p>",
-      buttons: {
-        shake: {
-          label: "Shake",
-          callback: () => resolve("shake")
-        },
-        settings: {
-          label: "Adjust Settings",
-          callback: () => resolve("settings")
-        }
-      },
-      default: "shake",
-      close: () => resolve("cancel")
-    });
-
-    dialog.render(true);
+    renderQuickMenu(resolve);
   });
 }
 
-function renderFallbackPrompt(resolve) {
+function renderQuickMenu(resolve) {
   const overlay = document.createElement("div");
   overlay.style.cssText = [
     "position:fixed",
@@ -209,19 +174,61 @@ function renderFallbackPrompt(resolve) {
     "background:rgba(0,0,0,0.45)"
   ].join(";");
 
-  overlay.innerHTML = `<div style="max-width:360px;padding:16px;background:#191813;color:#f0f0e0;border:1px solid #777;box-shadow:0 0 20px #000;">
-    <h2 style="margin-top:0;">Earthquake</h2>
-    <p>Shake the active scene now, or adjust Earthquake settings first?</p>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button type="button" data-earthquake-dialog="settings">Adjust Settings</button>
-      <button type="button" data-earthquake-dialog="shake">Shake</button>
-    </div>
+  overlay.innerHTML = `<div style="width:min(460px, calc(100vw - 32px));padding:16px;background:#191813;color:#f0f0e0;border:1px solid #777;box-shadow:0 0 20px #000;">
+    <form data-earthquake-quick-menu>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <h2 style="margin:0;">Earthquake</h2>
+        <button type="button" title="Open Settings" data-earthquake-dialog="settings" style="width:32px;height:32px;padding:0;">&#9881;</button>
+      </div>
+      <label style="display:block;margin:8px 0;">Intensity
+        <input name="intensity" type="range" min="10" max="250" step="5" value="${Number(game.settings.get(MODULE_ID, SETTINGS.intensity))}" style="width:100%;">
+      </label>
+      <label style="display:block;margin:8px 0;">Duration
+        <input name="duration" type="range" min="500" max="30000" step="500" value="${Number(game.settings.get(MODULE_ID, SETTINGS.duration))}" style="width:100%;">
+      </label>
+      <label style="display:block;margin:8px 0;">Sound Path
+        <input name="soundPath" type="text" value="${escapeAttribute(game.settings.get(MODULE_ID, SETTINGS.soundPath))}" style="width:100%;">
+      </label>
+      <label style="display:block;margin:8px 0;">Sound Volume
+        <input name="soundVolume" type="range" min="0" max="1" step="0.05" value="${Number(game.settings.get(MODULE_ID, SETTINGS.soundVolume))}" style="width:100%;">
+      </label>
+      <label style="display:block;margin:8px 0;">Dexterity Prompt
+        <select name="promptAudience" style="width:100%;">
+          ${renderAudienceOption("none", "No one")}
+          ${renderAudienceOption("everyone", "Everyone on active scene")}
+          ${renderAudienceOption("players", "Players only on active scene")}
+        </select>
+      </label>
+      <label style="display:block;margin:8px 0;">Dexterity DC
+        <input name="dexterityDC" type="range" min="1" max="40" step="1" value="${Number(game.settings.get(MODULE_ID, SETTINGS.dexterityDC))}" style="width:100%;">
+      </label>
+      <label style="display:block;margin:8px 0;">
+        <input name="shakeGM" type="checkbox" ${game.settings.get(MODULE_ID, SETTINGS.shakeGM) ? "checked" : ""}> Shake GM Canvas
+      </label>
+      <label style="display:block;margin:8px 0;">
+        <input name="applyProne" type="checkbox" ${game.settings.get(MODULE_ID, SETTINGS.applyProne) ? "checked" : ""}> Knock Prone On Failed Check
+      </label>
+      <label style="display:block;margin:8px 0;">
+        <input name="hideQuickMenu" type="checkbox"> Hide this quick menu
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <button type="button" data-earthquake-dialog="cancel">Cancel</button>
+        <button type="submit">Shake</button>
+      </div>
+    </form>
   </div>`;
 
-  const finish = action => {
+  const form = overlay.querySelector("[data-earthquake-quick-menu]");
+  const finish = async action => {
+    if (action === "shake") await saveQuickMenuSettings(form);
     overlay.remove();
     resolve(action);
   };
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    finish("shake");
+  });
 
   overlay.addEventListener("click", event => {
     if (event.target === overlay) finish("cancel");
@@ -230,6 +237,28 @@ function renderFallbackPrompt(resolve) {
   });
 
   document.body.appendChild(overlay);
+}
+
+function renderAudienceOption(value, label) {
+  const selected = game.settings.get(MODULE_ID, SETTINGS.promptAudience) === value ? "selected" : "";
+  return `<option value="${value}" ${selected}>${label}</option>`;
+}
+
+async function saveQuickMenuSettings(form) {
+  const fields = form.elements;
+
+  await game.settings.set(MODULE_ID, SETTINGS.intensity, Number(fields.intensity.value));
+  await game.settings.set(MODULE_ID, SETTINGS.duration, Number(fields.duration.value));
+  await game.settings.set(MODULE_ID, SETTINGS.soundPath, fields.soundPath.value);
+  await game.settings.set(MODULE_ID, SETTINGS.soundVolume, Number(fields.soundVolume.value));
+  await game.settings.set(MODULE_ID, SETTINGS.promptAudience, fields.promptAudience.value);
+  await game.settings.set(MODULE_ID, SETTINGS.dexterityDC, Number(fields.dexterityDC.value));
+  await game.settings.set(MODULE_ID, SETTINGS.shakeGM, fields.shakeGM.checked);
+  await game.settings.set(MODULE_ID, SETTINGS.applyProne, fields.applyProne.checked);
+
+  if (fields.hideQuickMenu.checked) {
+    await game.settings.set(MODULE_ID, SETTINGS.showQuickMenu, false);
+  }
 }
 
 function openSettings() {
@@ -496,4 +525,8 @@ function escapeHTML(value) {
   const element = document.createElement("div");
   element.textContent = String(value ?? "");
   return element.innerHTML;
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll('"', "&quot;");
 }
